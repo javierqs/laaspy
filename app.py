@@ -73,6 +73,21 @@ class Laaspy(object):
         # Now we proceed to delete script file and output file
         os.remove("{0}.ltf".format(lingo_file_name))
         os.remove("output_{0}.txt".format(lingo_file_name))
+
+        # And now we proceed to remove the DSN's (because we don't want that ODBC admin gets full of sh*t)
+        # TODO: Set string interpolation for whatever values come in
+        wine_rmv_odbc_dsn = "wine reg delete \"HKEY_CURRENT_USER\\SOFTWARE\\ODBC\\ODBC.INI\\Transportation\" /f"
+        wine_rmv_odbc_adm = "wine reg delete \"HKEY_CURRENT_USER\\SOFTWARE\\ODBC\\ODBC.INI\\ODBC Data Sources\" /v Transportation /f"
+
+        # Damn ... more process???
+        # Process below are just to avoid ODBC admin gets full
+        # TODO: why do I still use shell = True? I guess nobody knows
+        del_dsn_p = subprocess.Popen([wine_prfx + wine_rmv_odbc_dsn], shell = True)
+        del_dsn_p.wait()
+   
+        del_adm_p = subprocess.Popen([wine_prfx + wine_rmv_odbc_adm], shell = True)
+        del_dsn_p.wait()
+
         return html_content
     lingo_process.exposed = True
 
