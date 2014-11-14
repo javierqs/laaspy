@@ -2,11 +2,42 @@ import cherrypy
 import subprocess
 import os
 from time import time
+from jinja2 import Environment, FileSystemLoader
+env = Environment(loader=FileSystemLoader('views'))
+
+class MainController(object):
+
+    def index(self):
+        tmpl = env.get_template("/home/index.html")
+        return tmpl.render()
+
+class ModelsController(object):
+
+    def index(self):
+        return "Model#index"
+
+    def show(self, name):
+        tmpl = env.get_template("/models/show.html")
+        return tmpl.render(new_name = name)
+
+    def process(self, **kwargs):
+        p = kwargs
+        hs = "MODEL:\nTITLE:{0}\nSETS:\n{1}\nENDSETS\nDATA:\n{2}\nENDDATA\nCALC:\n{3}\nENDCALC\n{4}\nEND".format(p["model_title"],p["model_sets"],p["model_data"],p["model_calc"],p["model_obj"])
+        test_file = open("test.ltf","w")
+        test_file.write(hs)
+        test_file.close
+        cherrypy.log(hs)
+        cherrypy.log(','.join(kwargs.values()))
+        raise cherrypy.HTTPRedirect("/")
 
 class Laaspy(object):
     def index(self):
-        return "HI!"
+        return file("views/models/index.html")
     index.exposed = True
+
+    @cherrypy.expose
+    def models(self, name):
+        return "MMM"        
 
     def lingo_process(self):
         # Set time of arriving
@@ -75,12 +106,12 @@ class Laaspy(object):
         os.remove("output_{0}.txt".format(lingo_file_name))
 
         # And now we proceed to remove the DSN's (because we don't want that ODBC admin gets full of sh*t)
-        # TODO: Set string interpolation for whatever values come in
+        # TODO: Set string interpolation for whatever values come in
         wine_rmv_odbc_dsn = "wine reg delete \"HKEY_CURRENT_USER\\SOFTWARE\\ODBC\\ODBC.INI\\Transportation\" /f"
         wine_rmv_odbc_adm = "wine reg delete \"HKEY_CURRENT_USER\\SOFTWARE\\ODBC\\ODBC.INI\\ODBC Data Sources\" /v Transportation /f"
 
         # Damn ... more process???
-        # Process below are just to avoid ODBC admin gets full
+        # Process below are just to avoid ODBC admin gets full
         # TODO: why do I still use shell = True? I guess nobody knows
         del_dsn_p = subprocess.Popen([wine_prfx + wine_rmv_odbc_dsn], shell = True)
         del_dsn_p.wait()
@@ -91,5 +122,26 @@ class Laaspy(object):
         return html_content
     lingo_process.exposed = True
 
+def setup_routes():
+    d = cherrypy.dispatch.RoutesDispatcher()
+    d.connect('home', '/', controller= MainController(), action="index")
+    d.connect('model', '/models/{name}', controller=ModelsController(), action="show")
+    d.connect('process', '/models/{name}/process', controller=ModelsController(), action="process", conditions=dict(method=['POST']))
+    dispatcher = d
+    return dispatcher
+
+conf = {
+    '/': {
+        'request.dispatch': setup_routes(),
+        'tools.staticdir.root': os.path.abspath(os.getcwd())
+     }, 
+    '/static': {
+        'tools.staticdir.on': True,
+        'tools.staticdir.dir': './public'
+    }
+}
+app = cherrypy.tree.mount(None, config=conf)
 cherrypy.server.socket_host = '0.0.0.0'
-cherrypy.quickstart(Laaspy())
+cherrypy.quickstart(app)
+#cherrypy.server.socket_host = '0.0.0.0'
+#cherrypy.quickstart(Laaspy(), '/', conf)

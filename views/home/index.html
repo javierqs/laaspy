@@ -1,0 +1,24 @@
+{% extends "layouts/application.html" %}
+{% block content %}
+      <div class="jumbotron">
+
+        <h1>Lingo as a Service</h1>
+        <p class="lead">Ejecuta tus modelos de Lingo® via web</p>
+        <p><a class="btn btn-lg btn-success" href="#" role="button">Realiza una prueba</a></p>
+      </div>
+      <div class="row">
+        <div class="col-lg-8 col-lg-offset-2">
+          <form method="get" action="/models/show" class="bs-component">
+            <legend>O crea un modelo nuevo</legend>
+            <div class="form-group">
+              <div class="input-group">
+                <input type="text" class="form-control" name="name" autocomplete="off" placeholder="Ingresa nombre de modelo aqui">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit">Crear</button>
+                </span>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+{% endblock%}
